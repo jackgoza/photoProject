@@ -13,6 +13,14 @@ import javax.swing.event.*;
  */
 public class photoViewer extends JFrame implements ActionListener {
     
+    JButton nextButton = null;
+    JButton prevButton = null;
+    JTextField currPageText = null;
+    JTextArea totalPageText = null;
+    JLabel imageLabel = null;
+    
+    int imageNumber = 0;
+    
     public photoViewer(String title){
         super(title);
         
@@ -23,7 +31,7 @@ public class photoViewer extends JFrame implements ActionListener {
         
         Container contentPane = getContentPane();
         
-        JLabel imageLabel = new JLabel("", SwingConstants.CENTER);
+        imageLabel = new JLabel("", SwingConstants.CENTER);
         JScrollPane scrollPane = new JScrollPane(imageLabel);
         
         ImageIcon image = new ImageIcon("1.jpg");
@@ -35,10 +43,12 @@ public class photoViewer extends JFrame implements ActionListener {
         FlowLayout fl = new FlowLayout(FlowLayout.LEFT,5, 20);
         bottomPanel.setLayout(fl);
         
-        JTextField currPageText = new JTextField("9");
-        JTextArea totalPageText = new JTextArea("21");
-        JButton prevButton = new JButton("<Prev");
-        JButton nextButton = new JButton("Next>");
+        currPageText = new JTextField("0");
+        totalPageText = new JTextArea("0");
+        prevButton = new JButton("<Prev");
+        prevButton.addActionListener(this);
+        nextButton = new JButton("Next>");
+        nextButton.addActionListener(this);
         
         bottomPanel.add(currPageText);
         bottomPanel.add(totalPageText);
@@ -48,6 +58,25 @@ public class photoViewer extends JFrame implements ActionListener {
         contentPane.add(bottomPanel,BorderLayout.SOUTH);
 
     }
+    
+    @Override
+    public void actionPerformed(ActionEvent evt) {
+        System.out.println("ACTION");
+        if (evt.getSource() == nextButton){
+            imageNumber++;
+            currPageText.setText(Integer.toString(imageNumber));
+            System.out.println(imageNumber);
+        }
+        else if (evt.getSource() == prevButton){
+            if(imageNumber > 0){
+                imageNumber--;
+                currPageText.setText(Integer.toString(imageNumber));
+
+            }
+        }
+    }
+
+
     
     public static void main(String[] args) {
         
@@ -67,8 +96,4 @@ public class photoViewer extends JFrame implements ActionListener {
         });
     }
     
-    @Override
-    public void actionPerformed(ActionEvent evt) {
-        System.out.println("Button pressed");
-    }
 }
