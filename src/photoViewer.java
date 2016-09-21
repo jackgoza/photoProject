@@ -138,37 +138,6 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	System.out.println("Action?");
     }
 
-    /*
-    @Override
-    public void actionPerformed(ActionEvent evt) {
-	System.out.println("ACTION");
-	if (evt.getSource() == nextButton) {
-	    if (imageNumber < 5) {
-		imageNumber++;
-		currPageText.setText(Integer.toString(imageNumber));
-		if (imageNumber == 2) {
-		    prevButton.setEnabled(true);
-		}
-	    }
-
-	}
-	else if (evt.getSource() == prevButton) {
-	    if (imageNumber > 1) {
-		imageNumber--;
-		currPageText.setText(Integer.toString(imageNumber));
-		if (imageNumber == 4) {
-		    nextButton.setEnabled(true);
-		}
-	    }
-	}
-	if (imageNumber <= 1) {
-	    prevButton.setEnabled(false);
-	}
-	else if (imageNumber >= 5) {
-	    nextButton.setEnabled(false);
-	}
-    }
-     */
     private void prevButtonAction() {
 	if (imageNumber > 1) {
 	    imageNumber--;
