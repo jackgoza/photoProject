@@ -14,6 +14,7 @@ import javax.swing.event.*;
 public class photoViewer extends JFrame implements ActionListener, Serializable {
 
     Container mainWindow;
+    JPanel controlPane;
     JMenuBar topBar = null;
     JMenu fileMenu = null;
     JMenuItem saveMenuItem = null;
@@ -26,6 +27,9 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
     JTextField currPageText = null;
     JTextArea totalPageText = null;
     JLabel imageLabel = null;
+    JPanel buttonPane;
+    JTextArea descriptionTextArea;
+    JTextField dateTextField;
     ArrayList<BufferedImage> images = null;
 
     int imageNumber = 1;
@@ -44,16 +48,99 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 
 	// This is temporary (TODO: INIT TO IMAGE 1)
 	ImageIcon image = new ImageIcon("1.jpg");
-	int height = image.getIconHeight();
-	int width = image.getIconWidth();
-	Image tempimg = image.getImage(); // transform it
-	Image newimg = tempimg.getScaledInstance(width / 2, height / 2, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-	image = new ImageIcon(newimg);
+	//resizeImage();
 	imageLabel.setIcon(image);
 
-	setMenus();
-	// Create bottom panel to hold buttons, numbers
+	controlPane = new JPanel();
+	controlPane.setLayout(new BoxLayout(controlPane, BoxLayout.PAGE_AXIS));
 
+	createMenus(); // This function creates the menus
+
+	createInfoSpace();
+
+	createButtons(); // Wonder what this function does
+
+	mainWindow.add(controlPane, BorderLayout.SOUTH);
+
+	mainWindow.add(scrollPane);
+	//this.setPreferredSize(preferredSize);
+	this.setMinimumSize(getSize());
+
+    }
+
+    private void createMenus() {
+	// Create menu system and fill with wonderous sub-menus
+
+	topBar = new JMenuBar();
+	fileMenu = new JMenu("File");
+	topBar.add(fileMenu);
+	saveMenuItem = new JMenuItem("Save");
+	exitMenuItem = new JMenuItem("Exit");
+	fileMenu.add(saveMenuItem);
+	fileMenu.add(exitMenuItem);
+	viewMenu = new JMenu("View");
+	browseMenuItem = new JMenuItem("Browse");
+	browseMenuItem.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		buttonPane.setVisible(false);
+		descriptionTextArea.setEditable(false);
+		dateTextField.setEditable(false);
+	    }
+	});
+	maintainMenuItem = new JMenuItem("Maintain");
+	maintainMenuItem.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		buttonPane.setVisible(true);
+		descriptionTextArea.setEditable(true);
+		dateTextField.setEditable(true);
+	    }
+	});
+	topBar.add(viewMenu);
+	viewMenu.add(browseMenuItem);
+	viewMenu.add(maintainMenuItem);
+
+	this.setJMenuBar(topBar);
+    }
+
+    private void createInfoSpace() {
+	JPanel descriptionPane = new JPanel();
+	descriptionPane.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+	JLabel descriptionLabel = new JLabel("Description:");
+	descriptionTextArea = new JTextArea(4, 20);
+	descriptionTextArea.setEditable(false);
+	descriptionPane.add(descriptionLabel);
+	descriptionPane.add(descriptionTextArea);
+
+	JPanel datePane = new JPanel();
+//		datePane.setLayout(new FlowLayout(FlowLayout.LEFT));
+//		datePane.setLayout(new BoxLayout(datePane, BoxLayout.LINE_AXIS));
+
+	JLabel dateLabel = new JLabel("Date:");
+	dateLabel.setPreferredSize(new Dimension(descriptionLabel.getPreferredSize().width, dateLabel.getPreferredSize().height));
+	dateTextField = new JTextField("1/1/2014");
+	dateTextField.setEditable(false);
+	datePane.add(dateLabel);
+	datePane.add(dateTextField);
+	//datePane.add(Box.createHorizontalGlue());
+	buttonPane = new JPanel();
+	buttonPane.add(new JButton("Delete"));
+	buttonPane.add(new JButton("Save Changes"));
+	buttonPane.add(new JButton("Add Photo"));
+
+	JPanel leftRightPane = new JPanel();
+	leftRightPane.setLayout(new BorderLayout());
+	leftRightPane.add(datePane, BorderLayout.WEST);
+	leftRightPane.add(buttonPane, BorderLayout.EAST);
+	buttonPane.setVisible(false);
+	controlPane.add(descriptionPane);
+	controlPane.add(leftRightPane);
+
+    }
+
+    private void createButtons() {
 	Container bottomPanel = new JPanel();
 	Container bottomPanelWest = new JPanel();
 	Container bottomPanelEast = new JPanel();
@@ -103,30 +190,16 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	bottomPanel.add(Box.createHorizontalGlue());
 	bottomPanel.add(bottomPanelEast);
 
-	mainWindow.add(bottomPanel, BorderLayout.SOUTH);
-	mainWindow.add(scrollPane);
-	//this.setPreferredSize(preferredSize);
+	controlPane.add(bottomPanel);
 
     }
 
-    private void setMenus() {
-	// Create menu system and fill with wonderous sub-menus
-
-	topBar = new JMenuBar();
-	fileMenu = new JMenu("File");
-	topBar.add(fileMenu);
-	saveMenuItem = new JMenuItem("Save");
-	exitMenuItem = new JMenuItem("Exit");
-	fileMenu.add(saveMenuItem);
-	fileMenu.add(exitMenuItem);
-	viewMenu = new JMenu("View");
-	browseMenuItem = new JMenuItem("Browse");
-	maintainMenuItem = new JMenuItem("Maintain");
-	topBar.add(viewMenu);
-	viewMenu.add(browseMenuItem);
-	viewMenu.add(maintainMenuItem);
-
-	this.setJMenuBar(topBar);
+    private ImageIcon resizeImage(ImageIcon image) {
+	int height = image.getIconHeight();
+	int width = image.getIconWidth();
+	Image tempimg = image.getImage(); // transform it
+	Image newimg = tempimg.getScaledInstance(width / 2, height / 2, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+	return new ImageIcon(newimg);
     }
 
     private void importPhotos(String cwd) {
@@ -168,6 +241,16 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	else {
 	    throw new Error("Next button pressed when should be disabled!");
 	}
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+	return new Dimension(500, 500);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+	return new Dimension(750, 750);
     }
 
     public static void main(String[] args) {
