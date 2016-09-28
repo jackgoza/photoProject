@@ -1,19 +1,36 @@
 
-import java.awt.image.*;
+import java.io.Serializable;
+import javax.swing.*;
 
 /**
  *
  * @author jack
  */
-public class ProjPhoto {
+public class ProjPhoto implements Serializable {
 
-    ProjPhoto(BufferedImage newImage) {
+    private static final long serialVersionUID = 1516L;
+
+    ProjPhoto(ImageIcon newImage) {
 	picture = newImage;
+	description = " ";
+	date = " ";
     }
 
-    private String description;
-    private String date;
-    private BufferedImage picture;
+    public ImageIcon getIcon() {
+	return picture;
+    }
+
+    public void setDescription(String newDesc) {
+	description = newDesc;
+    }
+
+    public void setDate(String newDate) {
+	date = newDate;
+    }
+
+    public String description;
+    public String date;
+    public ImageIcon picture;
 
 }
 

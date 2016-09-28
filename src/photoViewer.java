@@ -1,38 +1,35 @@
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.*;
 import java.io.*;
 import java.util.*;
+import javax.accessibility.Accessible;
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.filechooser.*;
 
 /**
  *
  * @author jack
  */
-public class photoViewer extends JFrame implements ActionListener, Serializable {
+public class photoViewer extends JFrame implements ActionListener, Serializable, Accessible {
 
     Container mainWindow;
     JPanel controlPane;
     JMenuBar topBar = null;
     JMenu fileMenu = null;
-    JMenuItem saveMenuItem = null;
-    JMenuItem exitMenuItem = null;
+    JMenuItem saveMenuItem, exitMenuItem, browseMenuItem, maintainMenuItem;
     JMenu viewMenu = null;
-    JMenuItem browseMenuItem = null;
-    JMenuItem maintainMenuItem = null;
-    JButton nextButton = null;
-    JButton prevButton = null;
-    JTextField currPageText = null;
-    JTextArea totalPageText = null;
+    JTextField currPageText;
+    JTextArea descriptionTextArea, totalPageText;
     JLabel imageLabel = null;
     JPanel buttonPane;
-    JTextArea descriptionTextArea;
     JTextField dateTextField;
-    ArrayList<BufferedImage> images = null;
+    ArrayList<ProjPhoto> images;
+    JButton nextButton, prevButton, deleteButton, saveButton, addButton;
 
-    int imageNumber = 1;
+    private static final long serialVersionUID = 1123L;
+
+    int imageNumber = 0;
 
     public photoViewer(String title) // Constructor
     {
@@ -41,16 +38,22 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	super(title);
 	mainWindow = getContentPane();
 
+	images = new ArrayList<ProjPhoto>();
+
+	openLibrary();
+	// importPhotos();
 	// Create button to hold image
 	// (TODO: Bound the scroll pane on init)
 	imageLabel = new JLabel("", SwingConstants.CENTER);
 	JScrollPane scrollPane = new JScrollPane(imageLabel);
 
 	// This is temporary (TODO: INIT TO IMAGE 1)
-	ImageIcon image = new ImageIcon("1.jpg");
-	//resizeImage();
-	imageLabel.setIcon(image);
-
+	/*
+	images.add(new ProjPhoto(new ImageIcon("1.jpg")));
+	images.add(new ProjPhoto(new ImageIcon("2.jpg")));
+	images.add(new ProjPhoto(new ImageIcon("3.jpg")));
+	images.add(new ProjPhoto(new ImageIcon("4.jpg")));
+	 */
 	controlPane = new JPanel();
 	controlPane.setLayout(new BoxLayout(controlPane, BoxLayout.PAGE_AXIS));
 
@@ -60,12 +63,60 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 
 	createButtons(); // Wonder what this function does
 
+	if (images.size() > 0) {
+	    changeImage();
+	}
+
 	mainWindow.add(controlPane, BorderLayout.SOUTH);
 
 	mainWindow.add(scrollPane);
 	//this.setPreferredSize(preferredSize);
 	this.setMinimumSize(getSize());
 
+    }
+
+    void changeImage() {
+	imageLabel.setIcon(images.get(imageNumber).getIcon());
+	descriptionTextArea.setText(images.get(imageNumber).description);
+	dateTextField.setText(images.get(imageNumber).date);
+	currPageText.setText(Integer.toString(imageNumber + 1));
+    }
+
+    private void openLibrary() {
+	try {
+	    FileInputStream fileIn = new FileInputStream("photolib");
+	    ObjectInputStream objectIn = new ObjectInputStream(fileIn);
+	    images = (ArrayList) objectIn.readObject();
+	    objectIn.close();
+	    fileIn.close();
+	}
+	catch (IOException e) {
+	    System.out.println("No library detected, gallery set to empty.");
+	    return;
+	}
+	catch (ClassNotFoundException c) {
+	    System.out.println("Class not found");
+	    c.printStackTrace();
+	    return;
+	}
+
+    }
+
+    private void addPhoto(String inFile) {
+	try {
+	    ImageIcon newPhoto = new ImageIcon(inFile);
+	    images.add(new ProjPhoto(newPhoto));
+	    totalPageText.setText(Integer.toString(images.size()));
+	    imageNumber = images.size() - 1;
+	    changeImage();
+	    nextButton.setEnabled(false);
+	    prevButton.setEnabled(true);
+
+	}
+	catch (Throwable t) {
+	    t.printStackTrace();
+	    System.err.println("You suck at IO");
+	}
     }
 
     private void createMenus() {
@@ -77,28 +128,68 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	saveMenuItem = new JMenuItem("Save");
 	exitMenuItem = new JMenuItem("Exit");
 	fileMenu.add(saveMenuItem);
-	fileMenu.add(exitMenuItem);
-	viewMenu = new JMenu("View");
-	browseMenuItem = new JMenuItem("Browse");
-	browseMenuItem.addActionListener(new ActionListener() {
+
+	saveMenuItem.addActionListener(new ActionListener() {
 	    @Override
 	    public void actionPerformed(ActionEvent e) {
+		try {
+		    FileOutputStream fileOut = new FileOutputStream("photolib");
+		    ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+		    objectOut.writeObject(images);
+		    objectOut.close();
+		    fileOut.close();
+		}
+		catch (IOException ioe) {
+		    ioe.printStackTrace();
+		}
+	    }
+	});
+
+	fileMenu.add(exitMenuItem);
+
+	exitMenuItem.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e
+	    ) {
+		int dialogButton = JOptionPane.YES_NO_OPTION;
+		int dialogResult = JOptionPane.showConfirmDialog(null, "Are you sure you want to quit? Changes may not be saved!", "Warning", dialogButton);
+		if (dialogResult == JOptionPane.YES_OPTION) {
+		    System.exit(0);
+		}
+	    }
+	});
+
+	viewMenu = new JMenu("View");
+	browseMenuItem = new JMenuItem("Browse");
+
+	browseMenuItem.addActionListener(
+		new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e
+	    ) {
 		buttonPane.setVisible(false);
 		descriptionTextArea.setEditable(false);
 		dateTextField.setEditable(false);
 	    }
-	});
+	}
+	);
 	maintainMenuItem = new JMenuItem("Maintain");
-	maintainMenuItem.addActionListener(new ActionListener() {
+
+	maintainMenuItem.addActionListener(
+		new ActionListener() {
 	    @Override
-	    public void actionPerformed(ActionEvent e) {
+	    public void actionPerformed(ActionEvent e
+	    ) {
 		buttonPane.setVisible(true);
 		descriptionTextArea.setEditable(true);
 		dateTextField.setEditable(true);
 	    }
-	});
+	}
+	);
 	topBar.add(viewMenu);
+
 	viewMenu.add(browseMenuItem);
+
 	viewMenu.add(maintainMenuItem);
 
 	this.setJMenuBar(topBar);
@@ -111,6 +202,7 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	JLabel descriptionLabel = new JLabel("Description:");
 	descriptionTextArea = new JTextArea(4, 20);
 	descriptionTextArea.setEditable(false);
+
 	descriptionPane.add(descriptionLabel);
 	descriptionPane.add(descriptionTextArea);
 
@@ -122,13 +214,49 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	dateLabel.setPreferredSize(new Dimension(descriptionLabel.getPreferredSize().width, dateLabel.getPreferredSize().height));
 	dateTextField = new JTextField("1/1/2014");
 	dateTextField.setEditable(false);
+	dateTextField.setPreferredSize(new Dimension(100, 25));
 	datePane.add(dateLabel);
 	datePane.add(dateTextField);
 	//datePane.add(Box.createHorizontalGlue());
+
+	deleteButton = new JButton("Delete");
+	deleteButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		JOptionPane.showMessageDialog(mainWindow, "All art is good art. Don't be snobbish.");
+	    }
+	});
+
+	saveButton = new JButton("Save");
+	saveButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		images.get(imageNumber).setDescription(descriptionTextArea.getText());
+		images.get(imageNumber).setDate(dateTextField.getText());
+
+	    }
+	});
+
+	addButton = new JButton("Add Items");
+	addButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		JFileChooser chooser = new JFileChooser();
+		chooser.changeToParentDirectory();
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(
+			"JPG & GIF Images", "jpg", "gif");
+		chooser.setFileFilter(filter);
+		int returnVal = chooser.showOpenDialog(null);
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+		    addPhoto(chooser.getSelectedFile().getAbsolutePath());
+		}
+	    }
+	});
+
 	buttonPane = new JPanel();
-	buttonPane.add(new JButton("Delete"));
-	buttonPane.add(new JButton("Save Changes"));
-	buttonPane.add(new JButton("Add Photo"));
+	buttonPane.add(deleteButton);
+	buttonPane.add(saveButton);
+	buttonPane.add(addButton);
 
 	JPanel leftRightPane = new JPanel();
 	leftRightPane.setLayout(new BorderLayout());
@@ -152,12 +280,18 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 
 	// Create buttons and text fields
 	currPageText = new JTextField("1");
-	totalPageText = new JTextArea("5");
+	totalPageText = new JTextArea();
+	try {
+	    totalPageText.setText(String.valueOf(images.size()));
+	}
+	catch (NullPointerException n) {
+	    totalPageText.setText("0");
+	}
 	prevButton = new JButton("<Prev");
 	nextButton = new JButton("Next>");
 	prevButton.setEnabled(false);
 
-	// Create zoom slider (TO BE IMPLIMENTED)
+	/*
 	JSlider zoomSlide = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
 	zoomSlide.addChangeListener(new ChangeListener() {
 	    public void stateChanged(ChangeEvent e) {
@@ -165,7 +299,7 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 			+ ((JSlider) e.getSource()).getValue());
 	    }
 	});
-
+	 */
 	// Init action listeners to check for button presses
 	prevButton.addActionListener(new ActionListener() {
 	    @Override
@@ -184,7 +318,7 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	bottomPanelWest.add(totalPageText);
 	bottomPanelWest.add(prevButton);
 	bottomPanelWest.add(nextButton);
-	bottomPanelEast.add(zoomSlide);
+	// bottomPanelEast.add(zoomSlide);
 
 	bottomPanel.add(bottomPanelWest);
 	bottomPanel.add(Box.createHorizontalGlue());
@@ -192,8 +326,13 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 
 	controlPane.add(bottomPanel);
 
+	if (images.size() < 2) {
+	    nextButton.setEnabled(false);
+	}
+
     }
 
+    /*
     private ImageIcon resizeImage(ImageIcon image) {
 	int height = image.getIconHeight();
 	int width = image.getIconWidth();
@@ -202,45 +341,51 @@ public class photoViewer extends JFrame implements ActionListener, Serializable 
 	return new ImageIcon(newimg);
     }
 
-    private void importPhotos(String cwd) {
+    private void importPhotos() {
+	String currentDirectory;
+	File file = new File(".");
+	currentDirectory = file.getAbsolutePath();
 
     }
 
+     */
     @Override
     public void actionPerformed(ActionEvent evt) {
 	System.out.println("Action?");
     }
 
     private void prevButtonAction() {
-	if (imageNumber > 1) {
+	if (imageNumber > 0) {
 	    imageNumber--;
-	    currPageText.setText(Integer.toString(imageNumber));
-	    if (imageNumber == 4) {
+	    if (imageNumber < images.size() - 1) {
 		nextButton.setEnabled(true);
 	    }
-	    else if (imageNumber <= 1) {
+	    if (imageNumber <= 0) {
 		prevButton.setEnabled(false);
 	    }
+	    changeImage();
+	    //imageLabel.setIcon(images.get(imageNumber).getIcon());
 	}
 	else {
-	    throw new Error("Prev button pressed when should be disabled!");
+	    System.out.println("Prev button" + Integer.toString(imageNumber));
 	}
     }
 
     private void nextButtonAction() {
-	if (imageNumber < 5) {
+	if (imageNumber < images.size()) {
 	    imageNumber++;
-	    currPageText.setText(Integer.toString(imageNumber));
-	    if (imageNumber == 2) {
+	    if (imageNumber == 1) {
 		prevButton.setEnabled(true);
 	    }
-	    else if (imageNumber == 5) {
+	    else if (imageNumber >= images.size() - 1) {
 		nextButton.setEnabled(false);
 	    }
+	    changeImage();
+	    //imageLabel.setIcon(images.get(imageNumber).getIcon());
 	}
-	else {
-	    throw new Error("Next button pressed when should be disabled!");
-	}
+	// else {
+	//     System.out.println("Next button" + Integer.toString(imageNumber));
+	// }
     }
 
     @Override
